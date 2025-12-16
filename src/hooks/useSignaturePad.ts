@@ -9,6 +9,9 @@ export const useSignaturePad = (modalMode: ModalMode) => {
   const signaturePadRef = useRef<ExtendedCanvas>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isCanvasEmpty, setIsCanvasEmpty] = useState(true);
+  const [hasUploadedImage, setHasUploadedImage] = useState(false);
+  const [currentImageDataUrl, setCurrentImageDataUrl] = useState<string | null>(null);
+  const [hasRemovedBackground, setHasRemovedBackground] = useState(false);
 
   // Initialize canvas with HiDPI support for better anti-aliasing
   const initializeCanvas = useCallback(() => {
@@ -156,6 +159,9 @@ export const useSignaturePad = (modalMode: ModalMode) => {
     }
     if (fileInputRef.current) fileInputRef.current.value = '';
     setIsCanvasEmpty(true);
+    setHasUploadedImage(false);
+    setCurrentImageDataUrl(null);
+    setHasRemovedBackground(false);
   }, []);
 
   const handleImageUpload = useCallback(
@@ -166,11 +172,23 @@ export const useSignaturePad = (modalMode: ModalMode) => {
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
-          drawImageOnCanvas(event.target.result as string);
+          const dataUrl = event.target.result as string;
+          drawImageOnCanvas(dataUrl);
           setIsCanvasEmpty(false);
+          setHasUploadedImage(true);
+          setCurrentImageDataUrl(dataUrl);
         }
       };
       reader.readAsDataURL(file);
+    },
+    [drawImageOnCanvas]
+  );
+
+  const updateCanvasWithProcessedImage = useCallback(
+    (dataUrl: string) => {
+      drawImageOnCanvas(dataUrl);
+      setCurrentImageDataUrl(dataUrl);
+      setHasRemovedBackground(true);
     },
     [drawImageOnCanvas]
   );
@@ -196,6 +214,9 @@ export const useSignaturePad = (modalMode: ModalMode) => {
     fileInputRef,
     isCanvasEmpty,
     setIsCanvasEmpty,
+    hasUploadedImage,
+    hasRemovedBackground,
+    currentImageDataUrl,
     startDrawing,
     draw,
     stopDrawing,
@@ -205,5 +226,6 @@ export const useSignaturePad = (modalMode: ModalMode) => {
     drawImageOnCanvas,
     getCanvasDataUrl,
     initializeCanvas,
+    updateCanvasWithProcessedImage,
   };
 };

@@ -9,11 +9,11 @@
       http-equiv="Content-Security-Policy"
       content="
         default-src 'self';
-        script-src 'self' 'unsafe-inline' blob:;
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:;
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-        img-src 'self' data: blob:;
+        img-src 'self' data: blob: https://staticimgly.com;
         font-src 'self' https://fonts.gstatic.com;
-        connect-src 'self';
+        connect-src 'self' data: blob: https://staticimgly.com https://*.staticimgly.com;
         worker-src 'self' blob:;
         frame-src 'none';
         object-src 'none';

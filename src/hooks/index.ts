@@ -4,3 +4,4 @@ export { usePdfRenderer } from './usePdfRenderer';
 export { useSignaturePad } from './useSignaturePad';
 export { useDragResize } from './useDragResize';
 export { useWelcomeModal } from './useWelcomeModal';
+export { useBackgroundRemoval } from './useBackgroundRemoval';

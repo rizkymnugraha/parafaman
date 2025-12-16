@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // Hooks
-import { usePdfRenderer, useSignaturePad, useDragResize } from '@/hooks';
+import { usePdfRenderer, useSignaturePad, useDragResize, useBackgroundRemoval } from '@/hooks';
 
 // Utils
 import { getItemImage, savePdfWithItems, downloadBlob } from '@/utils';
@@ -92,6 +92,9 @@ export const EditorPage: React.FC = () => {
     fileInputRef,
     isCanvasEmpty,
     setIsCanvasEmpty,
+    hasUploadedImage,
+    hasRemovedBackground,
+    currentImageDataUrl,
     startDrawing,
     draw,
     stopDrawing,
@@ -101,7 +104,16 @@ export const EditorPage: React.FC = () => {
     drawImageOnCanvas,
     getCanvasDataUrl,
     initializeCanvas,
+    updateCanvasWithProcessedImage,
   } = useSignaturePad(modalMode);
+
+  const {
+    isProcessing: isRemovingBackground,
+    progress: backgroundRemovalProgress,
+    stage: backgroundRemovalStage,
+    removeImageBackground,
+    cancelProcessing: cancelBackgroundRemoval,
+  } = useBackgroundRemoval();
 
   const {
     draggingId,
@@ -363,6 +375,16 @@ export const EditorPage: React.FC = () => {
     setSelectedId(null);
   }, []);
 
+  // --- Background Removal Handler ---
+  const handleRemoveBackground = useCallback(async () => {
+    if (!currentImageDataUrl) return;
+
+    const resultDataUrl = await removeImageBackground(currentImageDataUrl);
+    if (resultDataUrl) {
+      updateCanvasWithProcessedImage(resultDataUrl);
+    }
+  }, [currentImageDataUrl, removeImageBackground, updateCanvasWithProcessedImage]);
+
   // --- Keyboard Shortcuts ---
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -547,6 +569,11 @@ export const EditorPage: React.FC = () => {
         signaturePadRef={signaturePadRef}
         fileInputRef={fileInputRef}
         isCanvasEmpty={isCanvasEmpty}
+        hasUploadedImage={hasUploadedImage}
+        hasRemovedBackground={hasRemovedBackground}
+        isRemovingBackground={isRemovingBackground}
+        backgroundRemovalProgress={backgroundRemovalProgress}
+        backgroundRemovalStage={backgroundRemovalStage}
         onStartDrawing={startDrawing}
         onDraw={draw}
         onStopDrawing={stopDrawing}
@@ -555,6 +582,8 @@ export const EditorPage: React.FC = () => {
         onDownloadSignature={downloadSignature}
         onSaveAndPlace={saveAndPlace}
         onInitializeCanvas={initializeCanvas}
+        onRemoveBackground={handleRemoveBackground}
+        onCancelBackgroundRemoval={cancelBackgroundRemoval}
       />
 
       <DeleteConfirmModal
