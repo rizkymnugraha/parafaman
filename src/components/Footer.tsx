@@ -36,7 +36,7 @@ export const Footer: React.FC<FooterProps> = ({ showPrivacyLink = true, classNam
         )}
         <span className="text-zinc-300 dark:text-zinc-600">·</span>
         <a
-          href="https://github.com"
+          href="https://github.com/rizkymnugraha/parafaman"
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-brand-500 dark:hover:text-brand-200 transition-colors"

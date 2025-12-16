@@ -2,17 +2,11 @@ import { useState, useRef, useCallback, type RefObject } from 'react';
 import type { PlacedItem, DragStartPosition, ResizeStartPosition } from '@/types';
 import { MIN_ITEM_WIDTH } from '@/constants';
 
-interface Viewport {
-  x: number;
-  y: number;
-}
-
 export const useDragResize = (
   placedItems: PlacedItem[],
   setPlacedItems: React.Dispatch<React.SetStateAction<PlacedItem[]>>,
-  _viewport: Viewport = { x: 0, y: 0 },
-  _containerRef?: RefObject<HTMLDivElement | null>,
-  canvasRef?: RefObject<HTMLCanvasElement | null>
+  canvasRef?: RefObject<HTMLCanvasElement | null>,
+  zoomLevel: number = 1.0
 ) => {
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const [resizingId, setResizingId] = useState<number | null>(null);
@@ -57,13 +51,14 @@ export const useDragResize = (
       const canvasLeft = canvasRect?.left ?? 0;
       const canvasTop = canvasRect?.top ?? 0;
 
-      // Calculate offset: mouse position relative to canvas top-left minus item position
+      // Calculate offset: mouse position relative to canvas, accounting for zoom
+      // Item positions are stored at base scale, but rendered at zoomLevel scale
       dragStartRef.current = {
-        x: clientX - canvasLeft - instance.x,
-        y: clientY - canvasTop - instance.y,
+        x: (clientX - canvasLeft) / zoomLevel - instance.x,
+        y: (clientY - canvasTop) / zoomLevel - instance.y,
       };
     },
-    [placedItems, bringToFront, canvasRef]
+    [placedItems, bringToFront, canvasRef, zoomLevel]
   );
 
   const handleResizeStart = useCallback(
@@ -93,7 +88,8 @@ export const useDragResize = (
       const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
 
       if (resizingId) {
-        const deltaX = clientX - resizeStartRef.current.startX;
+        // Account for zoom when calculating resize delta
+        const deltaX = (clientX - resizeStartRef.current.startX) / zoomLevel;
         const newWidth = Math.max(MIN_ITEM_WIDTH, resizeStartRef.current.startWidth + deltaX);
 
         setPlacedItems((prev) =>
@@ -106,16 +102,17 @@ export const useDragResize = (
         const canvasLeft = canvasRect?.left ?? 0;
         const canvasTop = canvasRect?.top ?? 0;
 
-        // Calculate new position relative to PDF canvas
-        const newX = clientX - canvasLeft - dragStartRef.current.x;
-        const newY = clientY - canvasTop - dragStartRef.current.y;
+        // Calculate new position relative to PDF canvas, accounting for zoom
+        // Convert screen coordinates to base scale coordinates
+        const newX = (clientX - canvasLeft) / zoomLevel - dragStartRef.current.x;
+        const newY = (clientY - canvasTop) / zoomLevel - dragStartRef.current.y;
 
         setPlacedItems((prev) =>
           prev.map((p) => (p.id === draggingId ? { ...p, x: newX, y: newY } : p))
         );
       }
     },
-    [draggingId, resizingId, setPlacedItems, canvasRef]
+    [draggingId, resizingId, setPlacedItems, canvasRef, zoomLevel]
   );
 
   const handleGlobalEnd = useCallback(() => {

@@ -43,7 +43,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <Button
               className="flex-1 gap-2 bg-neutral-900 hover:bg-neutral-700 text-white"
-              onClick={() => window.open('https://github.com/rizkraf/parafaman', '_blank')}
+              onClick={() => window.open('https://github.com/rizkymnugraha/parafaman', '_blank')}
             >
               <Github className="w-4 h-4" />
               Lihat & dukung di GitHub

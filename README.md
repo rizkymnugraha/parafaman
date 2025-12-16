@@ -1,73 +1,77 @@
-# React + TypeScript + Vite
+# ParafAman
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+ParafAman adalah alat berbasis web gratis dan aman yang memungkinkan Anda menambahkan tanda tangan dan/atau stempel ke dokumen PDF Anda. Semua proses dilakukan secara lokal di browser Anda, sehingga dokumen Anda tetap aman dan tidak pernah dikirim ke server manapun.
 
-Currently, two official plugins are available:
+## Fitur
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Tambahkan tanda tangan digital ke dokumen PDF
+- Tambahkan stempel/cap/materai ke dokumen PDF
+- Gambar tanda tangan langsung di canvas atau unggah gambar
+- Drag-and-drop untuk memposisikan tanda tangan dan stempel
+- Resize item dengan mudah
+- Zoom in/out untuk melihat dokumen dengan lebih detail
+- Pan/geser canvas untuk navigasi dokumen besar
+- Simpan tanda tangan dan stempel untuk digunakan kembali
+- Ekspor PDF dengan tanda tangan dan stempel yang sudah ditambahkan
+- Mendukung multi-halaman PDF
+- Mode gelap dan terang
+- Responsif untuk desktop dan mobile
 
-## React Compiler
+## Kebijakan Privasi
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Kami tidak pernah mengirim dokumen yang diunggah ke server manapun
+- Semua proses dilakukan secara lokal di browser Anda (client-side)
+- Tidak ada data yang dikumpulkan atau disimpan
+- Dokumen Anda tetap aman dan privat
 
-## Expanding the ESLint configuration
+## Dependensi
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- [React](https://react.dev/) - Library UI
+- [Vite](https://vite.dev/) - Build tool dan dev server
+- [TypeScript](https://www.typescriptlang.org/) - Type safety
+- [Tailwind CSS](https://tailwindcss.com/) - Styling
+- [pdf-lib](https://pdf-lib.js.org/) - Manipulasi PDF
+- [pdfjs-dist](https://mozilla.github.io/pdf.js/) - Render PDF
+- [npm](https://www.npmjs.com/) - Package manager
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Instalasi
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+1. Clone repository ini
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+git clone https://github.com/username/parafaman.git
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+2. Masuk ke direktori project
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cd parafaman
 ```
+
+3. Install dependensi
+
+```bash
+npm install
+```
+
+4. Jalankan development server
+
+```bash
+npm run dev
+```
+
+## Kontribusi
+
+Kontribusi selalu diterima! Silakan buat pull request atau buka issue jika menemukan bug atau memiliki saran fitur baru.
+
+## Lisensi
+
+MIT License - Silakan gunakan dan modifikasi sesuai kebutuhan Anda.
+
+## Donasi
+
+Jika Anda merasa ParafAman bermanfaat dan ingin mendukung pengembangan lebih lanjut, Anda dapat memberikan donasi melalui:
+
+- [Saweria](https://saweria.co/rizkymeiputra)
+
+Terima kasih atas dukungan Anda!

@@ -61,10 +61,8 @@ export const EditorPage: React.FC = () => {
   const [deletingType, setDeletingType] = useState<ModalMode | null>(null);
   const [isReplaceModalOpen, setIsReplaceModalOpen] = useState(false);
 
-  // --- Viewport States (transform-based panning) ---
-  const [isPanning, setIsPanning] = useState(false);
-  const [viewport, setViewport] = useState({ x: 0, y: 0 });
-  const panStartRef = useRef({ x: 0, y: 0, viewportX: 0, viewportY: 0 });
+  // --- Selected Item State (for mobile tap-to-select) ---
+  const [selectedId, setSelectedId] = useState<number | null>(null);
 
   // --- Sidebar State (from context) ---
   const { isOpen: isSidebarOpen, closeSidebar } = useSidebar();
@@ -113,7 +111,7 @@ export const EditorPage: React.FC = () => {
     handleGlobalMove,
     handleGlobalEnd,
     removePlacedItem,
-  } = useDragResize(placedItems, setPlacedItems, viewport, containerRef, canvasRef);
+  } = useDragResize(placedItems, setPlacedItems, canvasRef, zoomLevel);
 
   // --- Redirect if no PDF ---
   useEffect(() => {
@@ -273,12 +271,15 @@ export const EditorPage: React.FC = () => {
     setLoading(true);
 
     try {
+      // Divide canvas width by zoomLevel to get base scale width
+      // because item positions are stored at base scale (zoomLevel = 1.0)
+      const baseCanvasWidth = canvasRef.current.width / zoomLevel;
       const blob = await savePdfWithItems(
         pdfFile,
         placedItems,
         savedSignatures,
         savedStamps,
-        canvasRef.current.width
+        baseCanvasWidth
       );
       downloadBlob(blob, `ParafAman_${Date.now()}.pdf`);
     } catch (err) {
@@ -287,7 +288,7 @@ export const EditorPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [pdfFile, placedItems, savedSignatures, savedStamps]);
+  }, [pdfFile, placedItems, savedSignatures, savedStamps, zoomLevel]);
 
   const handleCloseFile = useCallback(() => {
     clearPdfData();
@@ -336,12 +337,14 @@ export const EditorPage: React.FC = () => {
     if (placedItems.length > 0 && pdfFile && canvasRef.current) {
       setLoading(true);
       try {
+        // Divide canvas width by zoomLevel to get base scale width
+        const baseCanvasWidth = canvasRef.current.width / zoomLevel;
         const blob = await savePdfWithItems(
           pdfFile,
           placedItems,
           savedSignatures,
           savedStamps,
-          canvasRef.current.width
+          baseCanvasWidth
         );
         downloadBlob(blob, `ParafAman_${Date.now()}.pdf`);
       } catch (err) {
@@ -353,48 +356,11 @@ export const EditorPage: React.FC = () => {
       setLoading(false);
     }
     replaceFileInputRef.current?.click();
-  }, [pdfFile, placedItems, savedSignatures, savedStamps]);
+  }, [pdfFile, placedItems, savedSignatures, savedStamps, zoomLevel]);
 
-  // --- Pan/Viewport Handlers ---
-  const handlePanStart = useCallback(
-    (e: React.MouseEvent | React.TouchEvent) => {
-      // Don't start panning if dragging/resizing an item
-      if (draggingId || resizingId) return;
-
-      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-
-      setIsPanning(true);
-      panStartRef.current = {
-        x: clientX,
-        y: clientY,
-        viewportX: viewport.x,
-        viewportY: viewport.y,
-      };
-    },
-    [draggingId, resizingId, viewport]
-  );
-
-  const handlePanMove = useCallback(
-    (e: React.MouseEvent | React.TouchEvent) => {
-      if (!isPanning) return;
-
-      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-
-      const deltaX = clientX - panStartRef.current.x;
-      const deltaY = clientY - panStartRef.current.y;
-
-      setViewport({
-        x: panStartRef.current.viewportX + deltaX,
-        y: panStartRef.current.viewportY + deltaY,
-      });
-    },
-    [isPanning]
-  );
-
-  const handlePanEnd = useCallback(() => {
-    setIsPanning(false);
+  // --- Background Click Handler (deselect items) ---
+  const handleBackgroundClick = useCallback(() => {
+    setSelectedId(null);
   }, []);
 
   // --- Keyboard Shortcuts ---
@@ -515,15 +481,14 @@ export const EditorPage: React.FC = () => {
         pageNum={pageNum}
         draggingId={draggingId}
         resizingId={resizingId}
-        isPanning={isPanning}
-        viewport={viewport}
+        zoomLevel={zoomLevel}
+        selectedId={selectedId}
         getItemImage={getItemImageWrapper}
         onDragStart={handleDragStart}
         onResizeStart={handleResizeStart}
         onRemoveItem={removePlacedItem}
-        onPanStart={handlePanStart}
-        onPanMove={handlePanMove}
-        onPanEnd={handlePanEnd}
+        onSelectItem={setSelectedId}
+        onBackgroundClick={handleBackgroundClick}
       />
 
       <PageNavigation
@@ -558,10 +523,17 @@ export const EditorPage: React.FC = () => {
 
       {(draggingId || resizingId) && (
         <div
-          className="fixed inset-0 z-50 cursor-move"
+          className="fixed inset-0 z-50 cursor-move touch-none"
           onMouseMove={handleGlobalMove}
-          onMouseUp={handleGlobalEnd}
-          onTouchMove={handleGlobalMove}
+          onMouseUp={() => {
+            handleGlobalEnd();
+            // Deselect item after drag ends on desktop
+            setSelectedId(null);
+          }}
+          onTouchMove={(e) => {
+            e.preventDefault();
+            handleGlobalMove(e);
+          }}
           onTouchEnd={handleGlobalEnd}
         />
       )}

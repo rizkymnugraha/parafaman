@@ -94,9 +94,6 @@ export const useSignaturePad = (modalMode: ModalMode) => {
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      // Initialize canvas if needed (handles dynamic sizing)
-      initializeCanvas();
-
       const rect = canvas.getBoundingClientRect();
       const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
       const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
@@ -118,7 +115,7 @@ export const useSignaturePad = (modalMode: ModalMode) => {
       canvas.isDrawing = true;
       setIsCanvasEmpty(false);
     },
-    [modalMode, initializeCanvas]
+    [modalMode]
   );
 
   const draw = useCallback(
