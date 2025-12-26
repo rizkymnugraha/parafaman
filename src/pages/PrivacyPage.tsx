@@ -69,6 +69,22 @@ export const PrivacyPage: React.FC = () => {
             </p>
           </section>
 
+          <section className="space-y-3">
+            <div className="flex items-center gap-2 text-zinc-900 dark:text-zinc-100">
+              <Lock className="w-5 h-5 text-brand-500" />
+              <h2 className="text-xl font-semibold">Dukungan PDF Terenkripsi</h2>
+            </div>
+            <p>
+              ParafAman mendukung PDF yang dilindungi password. Saat Anda membuka file PDF
+              terenkripsi, password hanya digunakan untuk mendekripsi file secara lokal di browser
+              Anda. <strong>Password tidak pernah dikirim atau disimpan di server manapun.</strong>
+            </p>
+            <p>
+              Anda memiliki kontrol penuh atas keamanan dokumen: simpan dengan password yang sama,
+              gunakan password baru, atau hapus proteksi password sesuai kebutuhan Anda.
+            </p>
+          </section>
+
           <section className="space-y-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
             <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Pertanyaan?</h2>
             <p>

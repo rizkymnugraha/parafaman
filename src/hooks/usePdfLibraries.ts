@@ -3,10 +3,8 @@ import * as pdfjsLib from 'pdfjs-dist';
 import * as PDFLib from 'pdf-lib-plus-encrypt';
 
 // Set up the worker for PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url
-).toString();
+// Using .js extension from public folder for server MIME type compatibility
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
 // Expose libraries globally for other modules
 window.pdfjsLib = pdfjsLib as typeof window.pdfjsLib;

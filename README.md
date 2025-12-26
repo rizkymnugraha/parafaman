@@ -1,6 +1,16 @@
-# ParafAman
+<h1 align="center">ParafAman</h1>
+<p align="center">
+  <img src="src/assets/landing.svg" alt="ParafAman Illustration" width="300">
+</p>
 
-ParafAman adalah alat berbasis web gratis dan aman yang memungkinkan Anda menambahkan tanda tangan dan/atau stempel ke dokumen PDF Anda. Semua proses dilakukan secara lokal di browser Anda, sehingga dokumen Anda tetap aman dan tidak pernah dikirim ke server manapun.
+<p align="center">
+    ParafAman adalah alat berbasis web gratis dan aman yang memungkinkan Anda menambahkan tanda tangan dan/atau stempel ke dokumen PDF Anda. Semua proses dilakukan secara lokal di browser Anda, sehingga dokumen Anda tetap aman dan tidak pernah dikirim ke server manapun.
+</p>
+
+<div align="center">
+    <img alt="GitHub Forks" src="https://img.shields.io/github/forks/rizkymnugraha/parafaman?style=social">
+    <img alt="GitHub Stars" src="https://img.shields.io/github/stars/rizkymnugraha/parafaman?style=social">
+</div>
 
 ## Fitur
 
@@ -14,6 +24,10 @@ ParafAman adalah alat berbasis web gratis dan aman yang memungkinkan Anda menamb
 - Simpan tanda tangan dan stempel untuk digunakan kembali
 - Ekspor PDF dengan tanda tangan dan stempel yang sudah ditambahkan
 - Mendukung multi-halaman PDF
+- **Dukungan PDF terenkripsi (password-protected)**
+  - Buka dan edit PDF yang dilindungi password
+  - Simpan dengan password yang sama, password baru, atau tanpa password
+  - Password diproses secara lokal dan tidak pernah dikirim ke server
 - Mode gelap dan terang
 - Responsif untuk desktop dan mobile
 
@@ -23,6 +37,7 @@ ParafAman adalah alat berbasis web gratis dan aman yang memungkinkan Anda menamb
 - Semua proses dilakukan secara lokal di browser Anda (client-side)
 - Tidak ada data yang dikumpulkan atau disimpan
 - Dokumen Anda tetap aman dan privat
+- Password untuk PDF terenkripsi hanya diproses di browser Anda dan tidak pernah dikirim ke server
 
 ## Dependensi
 
