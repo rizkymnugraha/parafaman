@@ -12,27 +12,38 @@ const isExpired = (timestamp: number): boolean => {
   return now - timestamp > oneDay;
 };
 
+const SHOW_DELAY_MS = 3000;
+
 export const useWelcomeModal = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
+    let shouldShow = false;
 
     if (!stored) {
       // First time user, show modal
-      setIsOpen(true);
-      return;
+      shouldShow = true;
+    } else {
+      try {
+        const data: StoredData = JSON.parse(stored);
+        if (isExpired(data.dismissedAt)) {
+          // Expired, show modal again
+          shouldShow = true;
+        }
+      } catch {
+        // Invalid data, show modal
+        shouldShow = true;
+      }
     }
 
-    try {
-      const data: StoredData = JSON.parse(stored);
-      if (isExpired(data.dismissedAt)) {
-        // Expired, show modal again
+    if (shouldShow) {
+      // Delay showing the modal to let user explore the app first
+      const timer = setTimeout(() => {
         setIsOpen(true);
-      }
-    } catch {
-      // Invalid data, show modal
-      setIsOpen(true);
+      }, SHOW_DELAY_MS);
+
+      return () => clearTimeout(timer);
     }
   }, []);
 

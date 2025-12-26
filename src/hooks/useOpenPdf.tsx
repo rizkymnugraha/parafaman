@@ -7,7 +7,8 @@ interface UseOpenPdfOptions {
     arrayBuffer: ArrayBuffer,
     doc: PDFDocument,
     numPages: number,
-    password?: string
+    password?: string,
+    filename?: string
   ) => void;
   onError?: (error: Error) => void;
 }
@@ -59,7 +60,7 @@ export const useOpenPdf = (options: UseOpenPdfOptions = {}): UseOpenPdfReturn =>
         const { arrayBuffer, doc, numPages } = await loadPdfFile(file, { password });
         setIsPasswordModalOpen(false);
         pendingFileRef.current = null;
-        onSuccess?.(arrayBuffer, doc, numPages, password);
+        onSuccess?.(arrayBuffer, doc, numPages, password, file.name);
       } catch (err) {
         if (err instanceof PasswordRequiredError) {
           // PDF is encrypted, show password modal

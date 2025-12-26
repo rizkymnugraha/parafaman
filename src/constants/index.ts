@@ -1,7 +1,7 @@
 // Constants for PDF Editor Application
 
-export const DEFAULT_SIGNATURE_WIDTH = 150;
-export const DEFAULT_STAMP_WIDTH = 120;
+export const DEFAULT_SIGNATURE_WIDTH = 200;
+export const DEFAULT_STAMP_WIDTH = 160;
 export const MIN_ITEM_WIDTH = 50;
 
 export const CANVAS_WIDTH = 460;

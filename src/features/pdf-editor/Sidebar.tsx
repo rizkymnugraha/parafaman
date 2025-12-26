@@ -1,9 +1,6 @@
 import React from 'react';
 import {
   Plus,
-  CornerDownRight,
-  Edit,
-  Trash2,
   Save,
   ArrowLeft,
   FolderOpen,
@@ -24,8 +21,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  ButtonGroupSeparator,
 } from '@/components/ui';
 import { Footer } from '@/components/Footer';
+import { ItemCard } from './ItemCard';
 import type { SavedItem, ModalMode } from '@/types';
 
 interface SidebarProps {
@@ -88,85 +87,100 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="p-4 border-b flex border-border bg-zinc-50/50 dark:bg-zinc-900/50 space-x-2">
-          <ButtonGroup className="flex-1">
+        <div className="p-4 border-b border-border bg-zinc-50/50 dark:bg-zinc-900/50 space-y-2">
+          <div className="flex space-x-2">
+            <ButtonGroup className="flex-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    className="flex-1 gap-2 font-bold"
+                    onClick={onSavePdf}
+                    disabled={isSaveDisabled}
+                  >
+                    {loading ? (
+                      <div className="w-3 h-3 border-2 border-white/50 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <Save className="w-3 h-3" />
+                    )}
+                    Simpan PDF
+                  </Button>
+                </TooltipTrigger>
+                {isPasswordProtected && (
+                  <TooltipContent className="hidden md:block">
+                    <span className="flex items-center">
+                      <Lock className="w-3 h-3 inline mr-1" /> Password di file ini akan tetap
+                      terjaga
+                    </span>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+              <ButtonGroupSeparator className="bg-zinc-600" />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="has-[>svg]:px-2" disabled={isSaveDisabled}>
+                    <ChevronDown className="w-3 h-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {isPasswordProtected ? (
+                    <>
+                      <DropdownMenuItem onClick={onSavePdfWithNewPassword}>
+                        <KeyRound className="w-4 h-4" />
+                        Simpan dengan Password Baru
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={onSavePdfWithoutPassword}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <LockOpen className="w-4 h-4" />
+                        Simpan tanpa Password
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    <DropdownMenuItem onClick={onSavePdfWithNewPassword}>
+                      <Lock className="w-4 h-4" />
+                      Simpan dengan Password
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </ButtonGroup>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  className="flex-1 gap-2 font-bold"
-                  onClick={onSavePdf}
-                  disabled={isSaveDisabled}
+                  variant="outline"
+                  size="icon"
+                  className="text-xs text-zinc-500 p-4 rounded-full"
+                  onClick={onReplaceFile}
                 >
-                  {loading ? (
-                    <div className="w-3 h-3 border-2 border-white/50 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <Save className="w-3 h-3" />
-                  )}
-                  Simpan PDF
-                  {isPasswordProtected && <Lock className="w-3 h-3" />}
+                  <FolderOpen className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
-              {isPasswordProtected && (
-                <TooltipContent>Password di file ini akan tetap terjaga</TooltipContent>
-              )}
+              <TooltipContent>Pilih File Lain</TooltipContent>
             </Tooltip>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button className="has-[>svg]:px-2" disabled={isSaveDisabled}>
-                  <ChevronDown className="w-3 h-3" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="text-xs text-zinc-500 p-4 rounded-full"
+                  onClick={onCloseFile}
+                >
+                  <ArrowLeft />
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {isPasswordProtected ? (
-                  <>
-                    <DropdownMenuItem onClick={onSavePdfWithNewPassword}>
-                      <KeyRound className="w-4 h-4" />
-                      Simpan dengan Password Baru
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={onSavePdfWithoutPassword}
-                      className="text-destructive focus:text-destructive"
-                    >
-                      <LockOpen className="w-4 h-4" />
-                      Simpan tanpa Password
-                    </DropdownMenuItem>
-                  </>
-                ) : (
-                  <DropdownMenuItem onClick={onSavePdfWithNewPassword}>
-                    <Lock className="w-4 h-4" />
-                    Simpan dengan Password
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </ButtonGroup>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                className="text-xs text-zinc-500 p-4 rounded-full"
-                onClick={onReplaceFile}
-              >
-                <FolderOpen className="w-4 h-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Pilih File Lain</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                className="text-xs text-zinc-500 p-4 rounded-full"
-                onClick={onCloseFile}
-              >
-                <ArrowLeft />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Kembali</TooltipContent>
-          </Tooltip>
+              </TooltipTrigger>
+              <TooltipContent>Kembali</TooltipContent>
+            </Tooltip>
+          </div>
+
+          {/* Mobile password protection message */}
+          {isPasswordProtected && (
+            <p className="md:hidden text-xs text-muted-foreground flex items-center">
+              <Lock className="w-3 h-3 mr-1.5" />
+              Password di file ini akan tetap terjaga
+            </p>
+          )}
         </div>
 
         {/* Library Scroll Area */}
@@ -177,15 +191,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Tanda Tangan
               </h3>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-6 w-6 p-0"
-                onClick={() => onOpenModal('signature')}
-                title="Tambah Baru"
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
             </div>
 
             {savedSignatures.length === 0 ? (
@@ -227,15 +232,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Stempel & Materai
               </h3>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-6 w-6 p-0"
-                onClick={() => onOpenModal('stamp')}
-                title="Tambah Baru"
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
             </div>
 
             {savedStamps.length === 0 ? (
@@ -273,79 +269,5 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <Footer className="border-t border-border py-3 px-4" />
       </aside>
     </>
-  );
-};
-
-interface ItemCardProps {
-  item: SavedItem;
-  type: ModalMode;
-  onPlace: () => void;
-  onEdit?: () => void;
-  onDelete: () => void;
-  showEdit?: boolean;
-}
-
-const ItemCard: React.FC<ItemCardProps> = ({
-  item,
-  type,
-  onPlace,
-  onEdit,
-  onDelete,
-  showEdit = false,
-}) => {
-  return (
-    <div className="group relative border rounded-lg bg-card p-0 hover:border-brand-500/50 transition-all duration-200 hover:shadow-md hover:scale-[1.02] cursor-pointer">
-      <div
-        className={`${type === 'stamp' ? 'h-20 p-2' : 'h-16'} flex items-center justify-center bg-white relative rounded-lg overflow-hidden`}
-      >
-        <img
-          src={item.dataUrl}
-          className={`${type === 'stamp' ? 'max-h-full max-w-full' : 'max-h-full max-w-[80%]'} object-contain`}
-          alt={type === 'stamp' ? 'Stamp' : 'Sig'}
-        />
-        <div className="absolute inset-0 bg-black/60 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-[1px]">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="icon"
-                className="h-8 w-8 rounded-full bg-brand-500 hover:bg-brand-600 text-white border-none shadow-lg hover:scale-110 transition-transform"
-                onClick={onPlace}
-              >
-                <CornerDownRight className="w-4 h-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Pasang</TooltipContent>
-          </Tooltip>
-          {showEdit && onEdit && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  className="h-8 w-8 rounded-full bg-white text-zinc-800 hover:bg-zinc-100 border-none shadow-lg hover:scale-110 transition-transform"
-                  onClick={onEdit}
-                >
-                  <Edit className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Ubah</TooltipContent>
-            </Tooltip>
-          )}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="icon"
-                variant="destructive"
-                className="h-8 w-8 rounded-full shadow-lg hover:scale-110 transition-transform"
-                onClick={onDelete}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Hapus</TooltipContent>
-          </Tooltip>
-        </div>
-      </div>
-    </div>
   );
 };

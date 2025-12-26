@@ -1,7 +1,9 @@
 export { CreateEditModal } from './CreateEditModal';
 export { DeleteConfirmModal } from './DeleteConfirmModal';
+export { FilenameModal } from './FilenameModal';
 export { InstructionsModal } from './InstructionsModal';
 export { PasswordModal } from './PasswordModal';
 export { RemovePasswordModal } from './RemovePasswordModal';
 export { WelcomeModal } from './WelcomeModal';
 export { ReplaceFileModal } from './ReplaceFileModal';
+export { ShareModal } from './ShareModal';

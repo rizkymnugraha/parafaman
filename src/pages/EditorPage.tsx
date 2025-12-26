@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // Hooks
-import { usePdfRenderer, useSignaturePad, useDragResize, useOpenPdf } from '@/hooks';
+import { usePdfRenderer, useSignaturePad, useDragResize, useOpenPdf, useShareModal } from '@/hooks';
 
 // Utils
 import { getItemImage, savePdfWithItems, downloadBlob } from '@/utils';
@@ -23,9 +23,11 @@ import {
   PageNavigation,
   CreateEditModal,
   DeleteConfirmModal,
+  FilenameModal,
   ReplaceFileModal,
   PasswordModal,
   RemovePasswordModal,
+  ShareModal,
 } from '@/features/pdf-editor';
 import { PasswordInputModal } from '@/components/PasswordInputModal';
 
@@ -36,6 +38,7 @@ export const EditorPage: React.FC = () => {
   const {
     pdfFile,
     pdfDoc,
+    pdfFilename,
     numPages,
     openPassword,
     savedSignatures,
@@ -63,12 +66,23 @@ export const EditorPage: React.FC = () => {
   const [isReplaceModalOpen, setIsReplaceModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isRemovePasswordModalOpen, setIsRemovePasswordModalOpen] = useState(false);
+  const [isFilenameModalOpen, setIsFilenameModalOpen] = useState(false);
+  const [pendingSaveType, setPendingSaveType] = useState<
+    'normal' | 'withPassword' | 'withoutPassword' | null
+  >(null);
 
   // --- Selected Item State (for mobile tap-to-select) ---
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   // --- Sidebar State (from context) ---
   const { isOpen: isSidebarOpen, closeSidebar } = useSidebar();
+
+  // --- Share Modal State ---
+  const {
+    isOpen: isShareModalOpen,
+    closeModal: closeShareModal,
+    triggerAfterSave,
+  } = useShareModal();
 
   // --- Close sidebar on unmount (page navigation) ---
   useEffect(() => {
@@ -91,12 +105,12 @@ export const EditorPage: React.FC = () => {
     handlePasswordSubmit: handleReplacePasswordSubmit,
     handlePasswordModalClose: handleReplacePasswordModalClose,
   } = useOpenPdf({
-    onSuccess: (arrayBuffer, doc, newNumPages, password) => {
+    onSuccess: (arrayBuffer, doc, newNumPages, password, filename) => {
       // Clear placed items only, keep signatures and stamps
       setPlacedItems([]);
       setPageNum(1);
-      // Update PDF data with password
-      setPdfData(arrayBuffer, doc, newNumPages, password);
+      // Update PDF data with password and filename
+      setPdfData(arrayBuffer, doc, newNumPages, password, filename);
       setIsReplaceModalOpen(false);
       // Reset file input
       if (replaceFileInputRef.current) {
@@ -188,18 +202,34 @@ export const EditorPage: React.FC = () => {
       const itemUrl = getItemImageWrapper(type, itemId);
       if (!itemUrl) return;
 
+      const itemWidth = type === 'stamp' ? DEFAULT_STAMP_WIDTH : DEFAULT_SIGNATURE_WIDTH;
+
+      // Calculate center position based on canvas size
+      const canvas = canvasRef.current;
+      let centerX = 100;
+      let centerY = 100;
+
+      if (canvas) {
+        // Canvas dimensions are at current zoom, divide by zoomLevel to get base coordinates
+        const baseCanvasWidth = canvas.width / zoomLevel;
+        const baseCanvasHeight = canvas.height / zoomLevel;
+        centerX = (baseCanvasWidth - itemWidth) / 2;
+        centerY = (baseCanvasHeight - itemWidth * 0.5) / 2; // Assume aspect ratio ~2:1 for signatures
+      }
+
       const newPlacement: PlacedItem = {
         id: Date.now() + Math.random(),
         type,
         itemId,
-        x: 50,
-        y: 50,
-        width: type === 'stamp' ? DEFAULT_STAMP_WIDTH : DEFAULT_SIGNATURE_WIDTH,
+        x: centerX,
+        y: centerY,
+        width: itemWidth,
         pageNum,
       };
       setPlacedItems((prev) => [...prev, newPlacement]);
+      closeSidebar();
     },
-    [getItemImageWrapper, pageNum, setPlacedItems]
+    [getItemImageWrapper, pageNum, setPlacedItems, zoomLevel, closeSidebar]
   );
 
   const saveAndPlace = useCallback(() => {
@@ -230,16 +260,32 @@ export const EditorPage: React.FC = () => {
         setSavedStamps((prev) => [...prev, newItem]);
       }
 
+      const itemWidth = modalMode === 'stamp' ? DEFAULT_STAMP_WIDTH : DEFAULT_SIGNATURE_WIDTH;
+
+      // Calculate center position based on canvas size
+      const canvas = canvasRef.current;
+      let centerX = 100;
+      let centerY = 100;
+
+      if (canvas) {
+        // Canvas dimensions are at current zoom, divide by zoomLevel to get base coordinates
+        const baseCanvasWidth = canvas.width / zoomLevel;
+        const baseCanvasHeight = canvas.height / zoomLevel;
+        centerX = (baseCanvasWidth - itemWidth) / 2;
+        centerY = (baseCanvasHeight - itemWidth * 0.5) / 2; // Assume aspect ratio ~2:1 for signatures
+      }
+
       const newPlacement: PlacedItem = {
         id: newId + 1,
         type: modalMode,
         itemId: newId,
-        x: 100,
-        y: 100,
-        width: modalMode === 'stamp' ? DEFAULT_STAMP_WIDTH : DEFAULT_SIGNATURE_WIDTH,
+        x: centerX,
+        y: centerY,
+        width: itemWidth,
         pageNum,
       };
       setPlacedItems((prev) => [...prev, newPlacement]);
+      closeSidebar();
     }
     setIsModalOpen(false);
   }, [
@@ -248,9 +294,11 @@ export const EditorPage: React.FC = () => {
     editingItemId,
     modalMode,
     pageNum,
+    zoomLevel,
     setSavedSignatures,
     setSavedStamps,
     setPlacedItems,
+    closeSidebar,
   ]);
 
   const handleOpenModal = useCallback((mode: ModalMode, editId: number | null = null) => {
@@ -299,53 +347,88 @@ export const EditorPage: React.FC = () => {
     [handlePageInputBlur]
   );
 
-  const savePdf = useCallback(async () => {
-    if (placedItems.length === 0 || !pdfFile || !canvasRef.current) return;
-    setLoading(true);
+  // Get default filename from the original PDF file (without extension)
+  const getDefaultFilename = useCallback(() => {
+    if (!pdfFilename) return 'document';
+    // Remove .pdf extension if present
+    return pdfFilename.replace(/\.pdf$/i, '');
+  }, [pdfFilename]);
 
-    try {
-      // Divide canvas width by zoomLevel to get base scale width
-      // because item positions are stored at base scale (zoomLevel = 1.0)
-      const baseCanvasWidth = canvasRef.current.width / zoomLevel;
-      // If the original PDF was password-protected, preserve the password
-      const saveOptions = openPassword ? { password: openPassword } : {};
+  const handleOpenFilenameModal = useCallback(
+    (saveType: 'normal' | 'withPassword' | 'withoutPassword') => {
+      if (placedItems.length === 0 || !pdfFile) return;
+      setPendingSaveType(saveType);
+      setIsFilenameModalOpen(true);
+    },
+    [placedItems.length, pdfFile]
+  );
 
-      const blob = await savePdfWithItems(
-        pdfFile,
-        placedItems,
-        savedSignatures,
-        savedStamps,
-        baseCanvasWidth,
-        saveOptions,
-        pdfDoc || undefined,
-        numPages
-      );
-      downloadBlob(blob, `ParafAman_${Date.now()}.pdf`);
-    } catch (err) {
-      console.error('Save error:', err);
-      setError('Gagal menyimpan PDF.');
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    pdfFile,
-    placedItems,
-    savedSignatures,
-    savedStamps,
-    zoomLevel,
-    pdfDoc,
-    numPages,
-    openPassword,
-  ]);
+  const savePdf = useCallback(
+    async (filename: string) => {
+      if (placedItems.length === 0 || !pdfFile || !canvasRef.current) return;
+      setLoading(true);
+
+      try {
+        // Divide canvas width by zoomLevel to get base scale width
+        // because item positions are stored at base scale (zoomLevel = 1.0)
+        const baseCanvasWidth = canvasRef.current.width / zoomLevel;
+        // If the original PDF was password-protected, preserve the password
+        const saveOptions = openPassword ? { password: openPassword } : {};
+
+        const blob = await savePdfWithItems(
+          pdfFile,
+          placedItems,
+          savedSignatures,
+          savedStamps,
+          baseCanvasWidth,
+          saveOptions,
+          pdfDoc || undefined,
+          numPages
+        );
+        downloadBlob(blob, `ParafAman_${filename}.pdf`);
+        setIsFilenameModalOpen(false);
+        setPendingSaveType(null);
+        triggerAfterSave();
+      } catch (err) {
+        console.error('Save error:', err);
+        setError('Gagal menyimpan PDF.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [
+      pdfFile,
+      placedItems,
+      savedSignatures,
+      savedStamps,
+      zoomLevel,
+      pdfDoc,
+      numPages,
+      openPassword,
+      triggerAfterSave,
+    ]
+  );
+
+  // State for pending password when saving with new password
+  const [pendingPassword, setPendingPassword] = useState<string | null>(null);
 
   const handleOpenPasswordModal = useCallback(() => {
     if (placedItems.length === 0 || !pdfFile) return;
     setIsPasswordModalOpen(true);
   }, [placedItems.length, pdfFile]);
 
+  const handlePasswordConfirm = useCallback(
+    (password: string) => {
+      setPendingPassword(password);
+      setIsPasswordModalOpen(false);
+      handleOpenFilenameModal('withPassword');
+    },
+    [handleOpenFilenameModal]
+  );
+
   const savePdfWithPassword = useCallback(
-    async (password: string) => {
-      if (placedItems.length === 0 || !pdfFile || !canvasRef.current) return;
+    async (filename: string) => {
+      if (placedItems.length === 0 || !pdfFile || !canvasRef.current || !pendingPassword) return;
       setLoading(true);
 
       try {
@@ -356,12 +439,15 @@ export const EditorPage: React.FC = () => {
           savedSignatures,
           savedStamps,
           baseCanvasWidth,
-          { password },
+          { password: pendingPassword },
           pdfDoc || undefined,
           numPages
         );
-        downloadBlob(blob, `ParafAman_${Date.now()}_protected.pdf`);
-        setIsPasswordModalOpen(false);
+        downloadBlob(blob, `ParafAman_${filename}.pdf`);
+        setIsFilenameModalOpen(false);
+        setPendingSaveType(null);
+        setPendingPassword(null);
+        triggerAfterSave();
       } catch (err) {
         console.error('Save error:', err);
         setError('Gagal menyimpan PDF dengan password.');
@@ -369,7 +455,17 @@ export const EditorPage: React.FC = () => {
         setLoading(false);
       }
     },
-    [pdfFile, placedItems, savedSignatures, savedStamps, zoomLevel, pdfDoc, numPages]
+    [
+      pdfFile,
+      placedItems,
+      savedSignatures,
+      savedStamps,
+      zoomLevel,
+      pdfDoc,
+      numPages,
+      pendingPassword,
+      triggerAfterSave,
+    ]
   );
 
   const handleOpenRemovePasswordModal = useCallback(() => {
@@ -377,32 +473,75 @@ export const EditorPage: React.FC = () => {
     setIsRemovePasswordModalOpen(true);
   }, [placedItems.length, pdfFile]);
 
-  const savePdfWithoutPassword = useCallback(async () => {
-    if (placedItems.length === 0 || !pdfFile || !canvasRef.current) return;
-    setLoading(true);
+  const handleRemovePasswordConfirm = useCallback(() => {
+    setIsRemovePasswordModalOpen(false);
+    handleOpenFilenameModal('withoutPassword');
+  }, [handleOpenFilenameModal]);
 
-    try {
-      const baseCanvasWidth = canvasRef.current.width / zoomLevel;
-      // Explicitly pass no password options to save without protection
-      const blob = await savePdfWithItems(
-        pdfFile,
-        placedItems,
-        savedSignatures,
-        savedStamps,
-        baseCanvasWidth,
-        {}, // No password
-        pdfDoc || undefined,
-        numPages
-      );
-      downloadBlob(blob, `ParafAman_${Date.now()}.pdf`);
-      setIsRemovePasswordModalOpen(false);
-    } catch (err) {
-      console.error('Save error:', err);
-      setError('Gagal menyimpan PDF.');
-    } finally {
-      setLoading(false);
-    }
-  }, [pdfFile, placedItems, savedSignatures, savedStamps, zoomLevel, pdfDoc, numPages]);
+  const savePdfWithoutPassword = useCallback(
+    async (filename: string) => {
+      if (placedItems.length === 0 || !pdfFile || !canvasRef.current) return;
+      setLoading(true);
+
+      try {
+        const baseCanvasWidth = canvasRef.current.width / zoomLevel;
+        // Explicitly pass no password options to save without protection
+        const blob = await savePdfWithItems(
+          pdfFile,
+          placedItems,
+          savedSignatures,
+          savedStamps,
+          baseCanvasWidth,
+          {}, // No password
+          pdfDoc || undefined,
+          numPages
+        );
+        downloadBlob(blob, `ParafAman_${filename}.pdf`);
+        setIsFilenameModalOpen(false);
+        setPendingSaveType(null);
+        triggerAfterSave();
+      } catch (err) {
+        console.error('Save error:', err);
+        setError('Gagal menyimpan PDF.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [
+      pdfFile,
+      placedItems,
+      savedSignatures,
+      savedStamps,
+      zoomLevel,
+      pdfDoc,
+      numPages,
+      triggerAfterSave,
+    ]
+  );
+
+  // Handle filename modal confirm based on pending save type
+  const handleFilenameConfirm = useCallback(
+    (filename: string) => {
+      switch (pendingSaveType) {
+        case 'normal':
+          savePdf(filename);
+          break;
+        case 'withPassword':
+          savePdfWithPassword(filename);
+          break;
+        case 'withoutPassword':
+          savePdfWithoutPassword(filename);
+          break;
+      }
+    },
+    [pendingSaveType, savePdf, savePdfWithPassword, savePdfWithoutPassword]
+  );
+
+  const handleFilenameModalClose = useCallback(() => {
+    setIsFilenameModalOpen(false);
+    setPendingSaveType(null);
+    setPendingPassword(null);
+  }, []);
 
   const handleCloseFile = useCallback(() => {
     clearPdfData();
@@ -491,7 +630,7 @@ export const EditorPage: React.FC = () => {
       if (modKey && e.key === 's') {
         e.preventDefault();
         if (placedItems.length > 0 && !loading) {
-          savePdf();
+          handleOpenFilenameModal('normal');
         }
         return;
       }
@@ -568,7 +707,7 @@ export const EditorPage: React.FC = () => {
     loading,
     canZoomIn,
     canZoomOut,
-    savePdf,
+    handleOpenFilenameModal,
     removePlacedItem,
     zoomIn,
     zoomOut,
@@ -595,6 +734,8 @@ export const EditorPage: React.FC = () => {
         getItemImage={getItemImageWrapper}
         onDragStart={handleDragStart}
         onResizeStart={handleResizeStart}
+        onGlobalMove={handleGlobalMove}
+        onGlobalEnd={handleGlobalEnd}
         onRemoveItem={removePlacedItem}
         onSelectItem={setSelectedId}
         onBackgroundClick={handleBackgroundClick}
@@ -627,7 +768,7 @@ export const EditorPage: React.FC = () => {
         onOpenModal={handleOpenModal}
         onPlaceItem={placeItemOnPdf}
         onDeleteItem={handleDeleteItem}
-        onSavePdf={savePdf}
+        onSavePdf={() => handleOpenFilenameModal('normal')}
         onSavePdfWithNewPassword={handleOpenPasswordModal}
         onSavePdfWithoutPassword={handleOpenRemovePasswordModal}
         onCloseFile={handleCloseFile}
@@ -639,15 +780,21 @@ export const EditorPage: React.FC = () => {
           className="fixed inset-0 z-50 cursor-move touch-none"
           onMouseMove={handleGlobalMove}
           onMouseUp={() => {
+            // Select the item that was being dragged/resized
+            if (draggingId) setSelectedId(draggingId);
+            if (resizingId) setSelectedId(resizingId);
             handleGlobalEnd();
-            // Deselect item after drag ends on desktop
-            setSelectedId(null);
           }}
           onTouchMove={(e) => {
             e.preventDefault();
             handleGlobalMove(e);
           }}
-          onTouchEnd={handleGlobalEnd}
+          onTouchEnd={() => {
+            // Select the item that was being dragged/resized
+            if (draggingId) setSelectedId(draggingId);
+            if (resizingId) setSelectedId(resizingId);
+            handleGlobalEnd();
+          }}
         />
       )}
 
@@ -690,14 +837,22 @@ export const EditorPage: React.FC = () => {
         isOpen={isPasswordModalOpen}
         loading={loading}
         onClose={() => setIsPasswordModalOpen(false)}
-        onConfirm={savePdfWithPassword}
+        onConfirm={handlePasswordConfirm}
       />
 
       <RemovePasswordModal
         isOpen={isRemovePasswordModalOpen}
         loading={loading}
         onClose={() => setIsRemovePasswordModalOpen(false)}
-        onConfirm={savePdfWithoutPassword}
+        onConfirm={handleRemovePasswordConfirm}
+      />
+
+      <FilenameModal
+        isOpen={isFilenameModalOpen}
+        loading={loading}
+        defaultFilename={getDefaultFilename()}
+        onClose={handleFilenameModalClose}
+        onConfirm={handleFilenameConfirm}
       />
 
       {/* Password modal for opening password-protected files when replacing */}
@@ -708,6 +863,9 @@ export const EditorPage: React.FC = () => {
         onClose={handleReplacePasswordModalClose}
         onSubmit={handleReplacePasswordSubmit}
       />
+
+      {/* Share modal - shown after first save */}
+      <ShareModal isOpen={isShareModalOpen} onClose={closeShareModal} />
 
       {/* Hidden file input for replace file */}
       <input

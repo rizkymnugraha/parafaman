@@ -4,6 +4,7 @@ import type { PDFDocument, SavedItem, PlacedItem } from '@/types';
 interface PdfStoreState {
   pdfFile: ArrayBuffer | null;
   pdfDoc: PDFDocument | null;
+  pdfFilename: string | null;
   numPages: number;
   openPassword: string | null; // Password used to open encrypted PDFs
   savedSignatures: SavedItem[];
@@ -16,7 +17,8 @@ interface PdfStoreActions {
     arrayBuffer: ArrayBuffer,
     doc: PDFDocument,
     numPages: number,
-    password?: string
+    password?: string,
+    filename?: string
   ) => void;
   clearPdfData: () => void;
   setSavedSignatures: React.Dispatch<React.SetStateAction<SavedItem[]>>;
@@ -31,6 +33,7 @@ const PdfStoreContext = createContext<PdfStoreContextType | null>(null);
 export const PdfStoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [pdfFile, setPdfFile] = useState<ArrayBuffer | null>(null);
   const [pdfDoc, setPdfDoc] = useState<PDFDocument | null>(null);
+  const [pdfFilename, setPdfFilename] = useState<string | null>(null);
   const [numPages, setNumPages] = useState(0);
   const [openPassword, setOpenPassword] = useState<string | null>(null);
   const [savedSignatures, setSavedSignatures] = useState<SavedItem[]>([]);
@@ -38,11 +41,18 @@ export const PdfStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [placedItems, setPlacedItems] = useState<PlacedItem[]>([]);
 
   const setPdfData = useCallback(
-    (arrayBuffer: ArrayBuffer, doc: PDFDocument, pages: number, password?: string) => {
+    (
+      arrayBuffer: ArrayBuffer,
+      doc: PDFDocument,
+      pages: number,
+      password?: string,
+      filename?: string
+    ) => {
       setPdfFile(arrayBuffer);
       setPdfDoc(doc);
       setNumPages(pages);
       setOpenPassword(password || null);
+      setPdfFilename(filename || null);
       setPlacedItems([]);
     },
     []
@@ -51,6 +61,7 @@ export const PdfStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const clearPdfData = useCallback(() => {
     setPdfFile(null);
     setPdfDoc(null);
+    setPdfFilename(null);
     setNumPages(0);
     setOpenPassword(null);
     setPlacedItems([]);
@@ -59,6 +70,7 @@ export const PdfStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const value: PdfStoreContextType = {
     pdfFile,
     pdfDoc,
+    pdfFilename,
     numPages,
     openPassword,
     savedSignatures,

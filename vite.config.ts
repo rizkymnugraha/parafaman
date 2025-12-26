@@ -24,7 +24,7 @@ export default defineConfig({
         manualChunks: {
           // Separate vendor chunks
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'pdf-lib': ['pdf-lib'],
+          'pdf-lib': ['pdf-lib-plus-encrypt'],
           pdfjs: ['pdfjs-dist'],
           ui: ['@radix-ui/react-dialog', '@radix-ui/react-tooltip', 'lucide-react'],
         },

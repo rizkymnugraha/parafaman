@@ -8,6 +8,7 @@ import { useOpenPdf } from '@/hooks';
 import { usePdfStore } from '@/store/pdfStore';
 import Lottie from 'lottie-react';
 import signatureAnimation from '@/assets/signature_animation.json';
+import landingIllustration from '@/assets/landing.svg';
 
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -24,8 +25,8 @@ export const LandingPage: React.FC = () => {
     handlePasswordSubmit,
     handlePasswordModalClose,
   } = useOpenPdf({
-    onSuccess: (arrayBuffer, doc, numPages, password) => {
-      setPdfData(arrayBuffer, doc, numPages, password);
+    onSuccess: (arrayBuffer, doc, numPages, password, filename) => {
+      setPdfData(arrayBuffer, doc, numPages, password, filename);
       navigate('/editor');
     },
   });
@@ -66,7 +67,7 @@ export const LandingPage: React.FC = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col md:flex-row max-w-7xl mx-auto">
         {/* Left Section - Copy */}
-        <div className="w-full md:w-1/2 flex flex-col justify-center items-center p-6 md:py-8 md:px-6 lg:py-10 lg:px-8">
+        <div className="w-full md:w-1/2 flex flex-col justify-center items-center p-6 pb-0 md:py-8 md:px-6 lg:py-10 lg:px-8">
           <div className="md:max-w-lg pt-24 md:p-0">
             <div className="flex relative">
               <Lottie
@@ -81,7 +82,17 @@ export const LandingPage: React.FC = () => {
                 </span>
               </h1>
             </div>
-            <p className="text-base text-zinc-600 dark:text-zinc-400 mb-6 leading-relaxed">
+
+            {/* Landing Illustration - visible on desktop */}
+            <div className="hidden md:block">
+              <img
+                src={landingIllustration}
+                alt="Digital signature illustration"
+                className="w-full max-w-md opacity-90"
+              />
+            </div>
+
+            <p className="text-base text-zinc-600 dark:text-zinc-400 leading-relaxed">
               Tambahkan tanda tangan dan stempel ke dokumen PDF Anda dengan mudah dan aman. Semua
               proses dilakukan langsung di browser Anda.
             </p>
@@ -139,7 +150,7 @@ export const LandingPage: React.FC = () => {
                           ? 'Lepaskan file di sini'
                           : 'Buka Dokumen PDF'}
                     </span>
-                    <span className="text-sm text-zinc-500 dark:text-zinc-400 block">
+                    <span className="text-sm text-zinc-500 dark:text-zinc-400 hidden md:block">
                       Klik atau seret file PDF ke sini
                     </span>
                   </div>
@@ -164,6 +175,15 @@ export const LandingPage: React.FC = () => {
                 ada data yang diunggah ke server, menjamin privasi dan keamanan dokumen sensitif
                 Anda tetap terjaga sepenuhnya.
               </p>
+
+              {/* Landing Illustration - visible on mobile only */}
+              <div className="md:hidden mt-4">
+                <img
+                  src={landingIllustration}
+                  alt="Digital signature illustration"
+                  className="w-full opacity-90"
+                />
+              </div>
             </div>
           </div>
         </div>

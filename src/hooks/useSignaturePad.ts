@@ -85,6 +85,27 @@ export const useSignaturePad = (modalMode: ModalMode) => {
     img.src = dataUrl;
   }, []);
 
+  const getCanvasCoordinates = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    const canvas = signaturePadRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+
+    const rect = canvas.getBoundingClientRect();
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+
+    // Calculate the scale factor between canvas internal size and display size
+    // The context is already scaled by dpr, so we need to work in CSS pixels
+    // but account for the ratio between rect (CSS) and canvas size / dpr
+    const dpr = window.devicePixelRatio || 1;
+    const scaleX = canvas.width / dpr / rect.width;
+    const scaleY = canvas.height / dpr / rect.height;
+
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
+
+    return { x, y };
+  }, []);
+
   const startDrawing = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
       if (modalMode !== 'signature') return;
@@ -94,11 +115,7 @@ export const useSignaturePad = (modalMode: ModalMode) => {
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      const rect = canvas.getBoundingClientRect();
-      const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
-      const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
-      const x = clientX - rect.left;
-      const y = clientY - rect.top;
+      const { x, y } = getCanvasCoordinates(e);
 
       // Set stroke properties for smooth, anti-aliased lines
       ctx.lineWidth = 2.5;
@@ -115,7 +132,7 @@ export const useSignaturePad = (modalMode: ModalMode) => {
       canvas.isDrawing = true;
       setIsCanvasEmpty(false);
     },
-    [modalMode]
+    [modalMode, getCanvasCoordinates]
   );
 
   const draw = useCallback(
@@ -128,16 +145,12 @@ export const useSignaturePad = (modalMode: ModalMode) => {
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      const rect = canvas.getBoundingClientRect();
-      const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
-      const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
-      const x = clientX - rect.left;
-      const y = clientY - rect.top;
+      const { x, y } = getCanvasCoordinates(e);
 
       ctx.lineTo(x, y);
       ctx.stroke();
     },
-    [modalMode]
+    [modalMode, getCanvasCoordinates]
   );
 
   const stopDrawing = useCallback(() => {
