@@ -59,7 +59,7 @@ export interface ModalProps {
 
 // PDF Library types (external)
 import type * as PdfjsLib from 'pdfjs-dist';
-import type * as PdfLibType from 'pdf-lib';
+import type * as PdfLibType from 'pdf-lib-plus-encrypt';
 
 declare global {
   interface Window {

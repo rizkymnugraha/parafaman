@@ -5,13 +5,19 @@ interface PdfStoreState {
   pdfFile: ArrayBuffer | null;
   pdfDoc: PDFDocument | null;
   numPages: number;
+  openPassword: string | null; // Password used to open encrypted PDFs
   savedSignatures: SavedItem[];
   savedStamps: SavedItem[];
   placedItems: PlacedItem[];
 }
 
 interface PdfStoreActions {
-  setPdfData: (arrayBuffer: ArrayBuffer, doc: PDFDocument, numPages: number) => void;
+  setPdfData: (
+    arrayBuffer: ArrayBuffer,
+    doc: PDFDocument,
+    numPages: number,
+    password?: string
+  ) => void;
   clearPdfData: () => void;
   setSavedSignatures: React.Dispatch<React.SetStateAction<SavedItem[]>>;
   setSavedStamps: React.Dispatch<React.SetStateAction<SavedItem[]>>;
@@ -26,21 +32,27 @@ export const PdfStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [pdfFile, setPdfFile] = useState<ArrayBuffer | null>(null);
   const [pdfDoc, setPdfDoc] = useState<PDFDocument | null>(null);
   const [numPages, setNumPages] = useState(0);
+  const [openPassword, setOpenPassword] = useState<string | null>(null);
   const [savedSignatures, setSavedSignatures] = useState<SavedItem[]>([]);
   const [savedStamps, setSavedStamps] = useState<SavedItem[]>([]);
   const [placedItems, setPlacedItems] = useState<PlacedItem[]>([]);
 
-  const setPdfData = useCallback((arrayBuffer: ArrayBuffer, doc: PDFDocument, pages: number) => {
-    setPdfFile(arrayBuffer);
-    setPdfDoc(doc);
-    setNumPages(pages);
-    setPlacedItems([]);
-  }, []);
+  const setPdfData = useCallback(
+    (arrayBuffer: ArrayBuffer, doc: PDFDocument, pages: number, password?: string) => {
+      setPdfFile(arrayBuffer);
+      setPdfDoc(doc);
+      setNumPages(pages);
+      setOpenPassword(password || null);
+      setPlacedItems([]);
+    },
+    []
+  );
 
   const clearPdfData = useCallback(() => {
     setPdfFile(null);
     setPdfDoc(null);
     setNumPages(0);
+    setOpenPassword(null);
     setPlacedItems([]);
   }, []);
 
@@ -48,6 +60,7 @@ export const PdfStoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     pdfFile,
     pdfDoc,
     numPages,
+    openPassword,
     savedSignatures,
     savedStamps,
     placedItems,

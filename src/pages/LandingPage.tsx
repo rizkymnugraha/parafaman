@@ -3,45 +3,37 @@ import { useNavigate } from 'react-router-dom';
 import { FolderOpen, AlertCircle, Shield } from 'lucide-react';
 import { Card } from '@/components/ui';
 import { Footer } from '@/components/Footer';
-import { loadPdfFile } from '@/utils';
+import { PasswordInputModal } from '@/components/PasswordInputModal';
+import { useOpenPdf } from '@/hooks';
 import { usePdfStore } from '@/store/pdfStore';
 import Lottie from 'lottie-react';
 import signatureAnimation from '@/assets/signature_animation.json';
 
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const { setPdfData } = usePdfStore();
 
-  const processFile = useCallback(
-    async (file: File) => {
-      if (file.type !== 'application/pdf') {
-        setError('File harus berformat PDF.');
-        return;
-      }
-
-      setLoading(true);
-      setError(null);
-
-      try {
-        const { arrayBuffer, doc, numPages } = await loadPdfFile(file);
-        setPdfData(arrayBuffer, doc, numPages);
-        navigate('/editor');
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Gagal membaca file PDF.');
-      } finally {
-        setLoading(false);
-      }
+  const {
+    loading,
+    error,
+    isPasswordModalOpen,
+    passwordError,
+    passwordLoading,
+    openFile,
+    handlePasswordSubmit,
+    handlePasswordModalClose,
+  } = useOpenPdf({
+    onSuccess: (arrayBuffer, doc, numPages, password) => {
+      setPdfData(arrayBuffer, doc, numPages, password);
+      navigate('/editor');
     },
-    [navigate, setPdfData]
-  );
+  });
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    await processFile(file);
+    await openFile(file);
   };
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -64,9 +56,9 @@ export const LandingPage: React.FC = () => {
 
       const file = e.dataTransfer.files?.[0];
       if (!file) return;
-      await processFile(file);
+      await openFile(file);
     },
-    [processFile]
+    [openFile]
   );
 
   return (
@@ -178,6 +170,14 @@ export const LandingPage: React.FC = () => {
       </div>
 
       <Footer />
+
+      <PasswordInputModal
+        isOpen={isPasswordModalOpen}
+        loading={passwordLoading}
+        error={passwordError}
+        onClose={handlePasswordModalClose}
+        onSubmit={handlePasswordSubmit}
+      />
     </div>
   );
 };

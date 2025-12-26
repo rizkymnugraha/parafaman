@@ -1,1 +1,8 @@
-export { loadPdfFile, getItemImage, savePdfWithItems, downloadBlob } from './pdf';
+export {
+  loadPdfFile,
+  getItemImage,
+  savePdfWithItems,
+  downloadBlob,
+  PasswordRequiredError,
+  IncorrectPasswordError,
+} from './pdf';

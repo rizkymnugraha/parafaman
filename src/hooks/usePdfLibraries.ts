@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
-import * as PDFLib from 'pdf-lib';
+import * as PDFLib from 'pdf-lib-plus-encrypt';
 
 // Set up the worker for PDF.js
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(

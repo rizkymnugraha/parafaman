@@ -7,6 +7,8 @@ export {
   CreateEditModal,
   DeleteConfirmModal,
   InstructionsModal,
+  PasswordModal,
+  RemovePasswordModal,
   WelcomeModal,
   ReplaceFileModal,
 } from './modals';

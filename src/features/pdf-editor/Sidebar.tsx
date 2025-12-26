@@ -1,6 +1,30 @@
 import React from 'react';
-import { Plus, CornerDownRight, Edit, Trash2, Save, ArrowLeft, FolderOpen, X } from 'lucide-react';
-import { Button, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui';
+import {
+  Plus,
+  CornerDownRight,
+  Edit,
+  Trash2,
+  Save,
+  ArrowLeft,
+  FolderOpen,
+  X,
+  ChevronDown,
+  Lock,
+  LockOpen,
+  KeyRound,
+} from 'lucide-react';
+import {
+  Button,
+  ButtonGroup,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/components/ui';
 import { Footer } from '@/components/Footer';
 import type { SavedItem, ModalMode } from '@/types';
 
@@ -9,11 +33,15 @@ interface SidebarProps {
   savedStamps: SavedItem[];
   loading: boolean;
   isOpen: boolean;
+  isPasswordProtected: boolean;
+  hasPlacedItems: boolean;
   onClose: () => void;
   onOpenModal: (mode: ModalMode, editingId?: number | null) => void;
   onPlaceItem: (type: ModalMode, itemId: number) => void;
   onDeleteItem: (type: ModalMode, itemId: number) => void;
   onSavePdf: () => void;
+  onSavePdfWithNewPassword: () => void;
+  onSavePdfWithoutPassword: () => void;
   onCloseFile: () => void;
   onReplaceFile: () => void;
 }
@@ -23,14 +51,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
   savedStamps,
   loading,
   isOpen,
+  isPasswordProtected,
+  hasPlacedItems,
   onClose,
   onOpenModal,
   onPlaceItem,
   onDeleteItem,
   onSavePdf,
+  onSavePdfWithNewPassword,
+  onSavePdfWithoutPassword,
   onCloseFile,
   onReplaceFile,
 }) => {
+  const isSaveDisabled = loading || !hasPlacedItems;
   return (
     <>
       {/* Mobile overlay */}
@@ -56,14 +89,58 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Action Buttons */}
         <div className="p-4 border-b flex border-border bg-zinc-50/50 dark:bg-zinc-900/50 space-x-2">
-          <Button className="flex-1 gap-2 font-bold" onClick={onSavePdf} disabled={loading}>
-            {loading ? (
-              <div className="w-3 h-3 border-2 border-white/50 border-t-white rounded-full animate-spin" />
-            ) : (
-              <Save className="w-3 h-3" />
-            )}
-            Simpan PDF
-          </Button>
+          <ButtonGroup className="flex-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  className="flex-1 gap-2 font-bold"
+                  onClick={onSavePdf}
+                  disabled={isSaveDisabled}
+                >
+                  {loading ? (
+                    <div className="w-3 h-3 border-2 border-white/50 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <Save className="w-3 h-3" />
+                  )}
+                  Simpan PDF
+                  {isPasswordProtected && <Lock className="w-3 h-3" />}
+                </Button>
+              </TooltipTrigger>
+              {isPasswordProtected && (
+                <TooltipContent>Password di file ini akan tetap terjaga</TooltipContent>
+              )}
+            </Tooltip>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="has-[>svg]:px-2" disabled={isSaveDisabled}>
+                  <ChevronDown className="w-3 h-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {isPasswordProtected ? (
+                  <>
+                    <DropdownMenuItem onClick={onSavePdfWithNewPassword}>
+                      <KeyRound className="w-4 h-4" />
+                      Simpan dengan Password Baru
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={onSavePdfWithoutPassword}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <LockOpen className="w-4 h-4" />
+                      Simpan tanpa Password
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <DropdownMenuItem onClick={onSavePdfWithNewPassword}>
+                    <Lock className="w-4 h-4" />
+                    Simpan dengan Password
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </ButtonGroup>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
