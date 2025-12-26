@@ -1,9 +1,10 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FolderOpen, AlertCircle, Shield } from 'lucide-react';
 import { Card } from '@/components/ui';
 import { Footer } from '@/components/Footer';
-import { loadPdfFile } from '@/utils';
+import { PasswordDialog } from '@/components/PasswordDialog';
+import { loadPdfFile, PasswordRequiredError, IncorrectPasswordError } from '@/utils';
 import { usePdfStore } from '@/store/pdfStore';
 import Lottie from 'lottie-react';
 import signatureAnimation from '@/assets/signature_animation.json';
@@ -15,8 +16,14 @@ export const LandingPage: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const { setPdfData } = usePdfStore();
 
+  // Password dialog state
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
+  const pendingFileRef = useRef<File | null>(null);
+
   const processFile = useCallback(
-    async (file: File) => {
+    async (file: File, passwordAttempt?: string) => {
       if (file.type !== 'application/pdf') {
         setError('File harus berformat PDF.');
         return;
@@ -26,17 +33,47 @@ export const LandingPage: React.FC = () => {
       setError(null);
 
       try {
-        const { arrayBuffer, doc, numPages } = await loadPdfFile(file);
-        setPdfData(arrayBuffer, doc, numPages);
+        const { arrayBuffer, doc, numPages } = await loadPdfFile(file, passwordAttempt);
+        setPdfData(arrayBuffer, doc, numPages, passwordAttempt);
+        // Reset password dialog state on success
+        setShowPasswordDialog(false);
+        setPasswordError(null);
+        pendingFileRef.current = null;
         navigate('/editor');
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Gagal membaca file PDF.');
+        if (err instanceof PasswordRequiredError) {
+          pendingFileRef.current = file;
+          setShowPasswordDialog(true);
+          setPasswordError(null);
+        } else if (err instanceof IncorrectPasswordError) {
+          setPasswordError('Password salah. Silakan coba lagi.');
+        } else {
+          setError(err instanceof Error ? err.message : 'Gagal membaca file PDF.');
+        }
       } finally {
         setLoading(false);
+        setIsSubmittingPassword(false);
       }
     },
     [navigate, setPdfData]
   );
+
+  const handlePasswordSubmit = useCallback(
+    async (password: string) => {
+      if (!pendingFileRef.current) return;
+
+      setIsSubmittingPassword(true);
+      setPasswordError(null);
+      await processFile(pendingFileRef.current, password);
+    },
+    [processFile]
+  );
+
+  const handlePasswordDialogClose = useCallback(() => {
+    setShowPasswordDialog(false);
+    setPasswordError(null);
+    pendingFileRef.current = null;
+  }, []);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -89,7 +126,7 @@ export const LandingPage: React.FC = () => {
                 </span>
               </h1>
             </div>
-            <p className="text-base text-zinc-600 dark:text-zinc-400 mb-6 leading-relaxed">
+            <p className="text-base text-zinc-600 dark:text-zinc-400 leading-relaxed">
               Tambahkan tanda tangan dan stempel ke dokumen PDF Anda dengan mudah dan aman. Semua
               proses dilakukan langsung di browser Anda.
             </p>
@@ -178,6 +215,14 @@ export const LandingPage: React.FC = () => {
       </div>
 
       <Footer />
+
+      <PasswordDialog
+        open={showPasswordDialog}
+        onOpenChange={handlePasswordDialogClose}
+        onSubmit={handlePasswordSubmit}
+        error={passwordError}
+        isSubmitting={isSubmittingPassword}
+      />
     </div>
   );
 };

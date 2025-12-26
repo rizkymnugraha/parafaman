@@ -1,5 +1,15 @@
 import React from 'react';
-import { Plus, CornerDownRight, Edit, Trash2, Save, ArrowLeft, FolderOpen, X } from 'lucide-react';
+import {
+  Plus,
+  CornerDownRight,
+  Edit,
+  Trash2,
+  Save,
+  ArrowLeft,
+  FolderOpen,
+  X,
+  Lock,
+} from 'lucide-react';
 import { Button, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui';
 import { Footer } from '@/components/Footer';
 import type { SavedItem, ModalMode } from '@/types';
@@ -9,6 +19,8 @@ interface SidebarProps {
   savedStamps: SavedItem[];
   loading: boolean;
   isOpen: boolean;
+  isPasswordProtected?: boolean;
+  hasPlacedItems?: boolean;
   onClose: () => void;
   onOpenModal: (mode: ModalMode, editingId?: number | null) => void;
   onPlaceItem: (type: ModalMode, itemId: number) => void;
@@ -23,6 +35,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   savedStamps,
   loading,
   isOpen,
+  isPasswordProtected = false,
+  hasPlacedItems = false,
   onClose,
   onOpenModal,
   onPlaceItem,
@@ -56,14 +70,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Action Buttons */}
         <div className="p-4 border-b flex border-border bg-zinc-50/50 dark:bg-zinc-900/50 space-x-2">
-          <Button className="flex-1 gap-2 font-bold" onClick={onSavePdf} disabled={loading}>
-            {loading ? (
-              <div className="w-3 h-3 border-2 border-white/50 border-t-white rounded-full animate-spin" />
-            ) : (
-              <Save className="w-3 h-3" />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                className="flex-1 gap-2 font-bold"
+                onClick={onSavePdf}
+                disabled={loading || !hasPlacedItems}
+              >
+                {loading ? (
+                  <div className="w-3 h-3 border-2 border-white/50 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <Save className="w-3 h-3" />
+                )}
+                Simpan PDF
+                {isPasswordProtected && <Lock className="w-3 h-3" />}
+              </Button>
+            </TooltipTrigger>
+            {isPasswordProtected && (
+              <TooltipContent>Password file ini akan tetap terjaga</TooltipContent>
             )}
-            Simpan PDF
-          </Button>
+          </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button

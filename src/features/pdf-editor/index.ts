@@ -9,4 +9,5 @@ export {
   InstructionsModal,
   WelcomeModal,
   ReplaceFileModal,
+  SavePasswordPdfModal,
 } from './modals';

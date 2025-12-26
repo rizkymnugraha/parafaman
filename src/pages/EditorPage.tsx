@@ -27,6 +27,7 @@ import {
   CreateEditModal,
   DeleteConfirmModal,
   ReplaceFileModal,
+  SavePasswordPdfModal,
 } from '@/features/pdf-editor';
 
 export const EditorPage: React.FC = () => {
@@ -37,6 +38,8 @@ export const EditorPage: React.FC = () => {
     pdfFile,
     pdfDoc,
     numPages,
+    isPasswordProtected,
+    pdfPassword,
     savedSignatures,
     savedStamps,
     placedItems,
@@ -60,6 +63,7 @@ export const EditorPage: React.FC = () => {
   const [deletingItemId, setDeletingItemId] = useState<number | null>(null);
   const [deletingType, setDeletingType] = useState<ModalMode | null>(null);
   const [isReplaceModalOpen, setIsReplaceModalOpen] = useState(false);
+  const [isSavePasswordModalOpen, setIsSavePasswordModalOpen] = useState(false);
 
   // --- Selected Item State (for mobile tap-to-select) ---
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -266,9 +270,10 @@ export const EditorPage: React.FC = () => {
     [handlePageInputBlur]
   );
 
-  const savePdf = useCallback(async () => {
+  const doSavePdf = useCallback(async () => {
     if (placedItems.length === 0 || !pdfFile || !canvasRef.current) return;
     setLoading(true);
+    setIsSavePasswordModalOpen(false);
 
     try {
       // Divide canvas width by zoomLevel to get base scale width
@@ -279,7 +284,9 @@ export const EditorPage: React.FC = () => {
         placedItems,
         savedSignatures,
         savedStamps,
-        baseCanvasWidth
+        baseCanvasWidth,
+        pdfPassword,
+        pdfDoc
       );
       downloadBlob(blob, `ParafAman_${Date.now()}.pdf`);
     } catch (err) {
@@ -288,7 +295,19 @@ export const EditorPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [pdfFile, placedItems, savedSignatures, savedStamps, zoomLevel]);
+  }, [pdfFile, pdfDoc, placedItems, savedSignatures, savedStamps, zoomLevel, pdfPassword]);
+
+  const savePdf = useCallback(() => {
+    if (placedItems.length === 0 || !pdfFile || !canvasRef.current) return;
+
+    // Show confirmation modal for password-protected PDFs
+    if (isPasswordProtected) {
+      setIsSavePasswordModalOpen(true);
+      return;
+    }
+
+    doSavePdf();
+  }, [placedItems, pdfFile, isPasswordProtected, doSavePdf]);
 
   const handleCloseFile = useCallback(() => {
     clearPdfData();
@@ -344,7 +363,9 @@ export const EditorPage: React.FC = () => {
           placedItems,
           savedSignatures,
           savedStamps,
-          baseCanvasWidth
+          baseCanvasWidth,
+          pdfPassword,
+          pdfDoc
         );
         downloadBlob(blob, `ParafAman_${Date.now()}.pdf`);
       } catch (err) {
@@ -356,7 +377,7 @@ export const EditorPage: React.FC = () => {
       setLoading(false);
     }
     replaceFileInputRef.current?.click();
-  }, [pdfFile, placedItems, savedSignatures, savedStamps, zoomLevel]);
+  }, [pdfFile, pdfDoc, placedItems, savedSignatures, savedStamps, zoomLevel, pdfPassword]);
 
   // --- Background Click Handler (deselect items) ---
   const handleBackgroundClick = useCallback(() => {
@@ -512,6 +533,8 @@ export const EditorPage: React.FC = () => {
         savedStamps={savedStamps}
         loading={loading}
         isOpen={isSidebarOpen}
+        isPasswordProtected={isPasswordProtected}
+        hasPlacedItems={placedItems.length > 0}
         onClose={closeSidebar}
         onOpenModal={handleOpenModal}
         onPlaceItem={placeItemOnPdf}
@@ -571,6 +594,13 @@ export const EditorPage: React.FC = () => {
         onClose={() => setIsReplaceModalOpen(false)}
         onReplaceOnly={handleReplaceOnly}
         onSaveAndReplace={handleSaveAndReplace}
+      />
+
+      <SavePasswordPdfModal
+        isOpen={isSavePasswordModalOpen}
+        onClose={() => setIsSavePasswordModalOpen(false)}
+        onConfirm={doSavePdf}
+        isLoading={loading}
       />
 
       {/* Hidden file input for replace file */}

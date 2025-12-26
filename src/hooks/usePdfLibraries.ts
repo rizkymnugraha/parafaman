@@ -1,12 +1,9 @@
 import { useState, useEffect } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
-import * as PDFLib from 'pdf-lib';
+import * as PDFLib from 'pdf-lib-plus-encrypt';
 
-// Set up the worker for PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url
-).toString();
+// Set up the worker for PDF.js (served from public folder)
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
 // Expose libraries globally for other modules
 window.pdfjsLib = pdfjsLib as typeof window.pdfjsLib;
