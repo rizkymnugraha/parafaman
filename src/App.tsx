@@ -2,7 +2,7 @@ import { RouterProvider } from 'react-router-dom';
 import { router } from '@/router';
 import { PdfStoreProvider, InstructionsProvider, SidebarProvider, AboutProvider } from '@/store';
 import { usePdfLibraries } from '@/hooks';
-import { LoadingScreen } from '@/features/pdf-editor';
+import { LoadingScreen } from '@/features/sign';
 import { ThemeProvider } from '@/components/theme-provider';
 
 function AppContent() {

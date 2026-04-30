@@ -18,17 +18,17 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleSidebar,
 }) => {
   const location = useLocation();
-  const isLandingPage = location.pathname === '/';
+  const isSignPage = location.pathname === '/sign';
 
   return (
     <div
       className={`fixed top-6 z-30 transition-all duration-500 ease-in-out left-1/2 -translate-x-1/2 ${
-        !isLandingPage ? 'md:left-4 md:translate-x-0' : ''
+        isSignPage ? 'md:left-4 md:translate-x-0' : ''
       }`}
     >
       <header
         className={`h-12 border shadow-md border-border bg-background flex items-center justify-between px-4 shrink-0 rounded-full transition-all duration-500 ease-in-out w-[min(32rem,calc(100vw-2rem))] ${
-          !isLandingPage ? 'md:w-[min(24rem,calc(100vw-2rem))]' : ''
+          isSignPage ? 'md:w-[min(24rem,calc(100vw-2rem))]' : ''
         }`}
       >
         <div className="flex items-center gap-2">
@@ -39,8 +39,8 @@ export const Header: React.FC<HeaderProps> = ({
           </h2>
         </div>
         <div className="flex items-center gap-1">
-          {/* Show Help button only on editor page */}
-          {!isLandingPage && (
+          {/* Show Help button only on sign page */}
+          {isSignPage && (
             <Button
               variant="ghost"
               className="rounded-full"
@@ -60,8 +60,8 @@ export const Header: React.FC<HeaderProps> = ({
           >
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
-          {/* Mobile menu button - only on editor page */}
-          {!isLandingPage && onToggleSidebar && (
+          {/* Mobile menu button - only on sign page */}
+          {isSignPage && onToggleSidebar && (
             <Button
               variant="ghost"
               className="rounded-full md:hidden"

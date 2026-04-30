@@ -84,7 +84,7 @@ export const getItemImage = (
 };
 
 // Helper to render a PDF page to canvas and get image data
-const renderPageToImage = async (
+export const renderPageToImage = async (
   pdfDoc: PDFDocument,
   pageNum: number,
   scale: number = 2 // Higher scale for better quality

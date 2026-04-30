@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, ScrollRestoration } from 'react-router-dom';
-import { Header, InstructionsModal, WelcomeModal } from '@/features/pdf-editor';
+import { Header, InstructionsModal, WelcomeModal } from '@/features/sign';
 import { useTheme } from '@/components/theme-provider';
 import { useInstructions, useSidebar, useAbout } from '@/store';
 import { useWelcomeModal } from '@/hooks';

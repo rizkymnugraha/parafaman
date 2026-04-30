@@ -28,10 +28,12 @@ import {
   PasswordModal,
   RemovePasswordModal,
   ShareModal,
-} from '@/features/pdf-editor';
+} from '@/features/sign';
+import { FilePicker, ToolPageShell } from '@/features/_shared';
 import { PasswordInputModal } from '@/components/PasswordInputModal';
+import { PenLine } from 'lucide-react';
 
-export const EditorPage: React.FC = () => {
+export const SignPage: React.FC = () => {
   const navigate = useNavigate();
 
   // --- Store ---
@@ -159,13 +161,6 @@ export const EditorPage: React.FC = () => {
     handleGlobalEnd,
     removePlacedItem,
   } = useDragResize(placedItems, setPlacedItems, canvasRef, zoomLevel);
-
-  // --- Redirect if no PDF ---
-  useEffect(() => {
-    if (!pdfFile || !pdfDoc) {
-      navigate('/');
-    }
-  }, [pdfFile, pdfDoc, navigate]);
 
   // --- Effects ---
   useEffect(() => {
@@ -715,9 +710,23 @@ export const EditorPage: React.FC = () => {
     handleCloseFile,
   ]);
 
-  // Don't render if no PDF
+  // Show file picker if no PDF loaded
   if (!pdfFile || !pdfDoc) {
-    return null;
+    return (
+      <ToolPageShell
+        title="Tanda Tangan PDF"
+        description="Tambahkan tanda tangan dan stempel ke dokumen PDF Anda."
+        icon={<PenLine className="w-6 h-6" />}
+      >
+        <FilePicker
+          title="Buka Dokumen PDF"
+          subtitle="Klik atau seret file PDF ke sini"
+          onSuccess={({ arrayBuffer, doc, numPages, password, filename }) => {
+            setPdfData(arrayBuffer, doc, numPages, password, filename);
+          }}
+        />
+      </ToolPageShell>
+    );
   }
 
   return (
